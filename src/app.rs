@@ -12,7 +12,7 @@ use crate::fl;
 /// This is the struct that represents your application.
 /// It is used to define the data that will be used by your application.
 #[derive(Default)]
-pub struct YourApp {
+pub struct LaunchControl {
     /// Application state which is managed by the COSMIC runtime.
     core: Core,
     /// The popup id.
@@ -39,7 +39,7 @@ pub enum Message {
 /// - `Flags` is the data that your application needs to use before it starts.
 /// - `Message` is the enum that contains all the possible variants that your application will need to transmit messages.
 /// - `APP_ID` is the unique identifier of your application.
-impl Application for YourApp {
+impl Application for LaunchControl {
     type Executor = cosmic::executor::Default;
 
     type Flags = ();
@@ -64,7 +64,7 @@ impl Application for YourApp {
     /// - `flags` is used to pass in any data that your application needs to use before it starts.
     /// - `Command` type is used to send messages to your application. `Command::none()` can be used to send no messages to your application.
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
-        let app = YourApp {
+        let app = LaunchControl {
             core,
             ..Default::default()
         };
@@ -82,7 +82,7 @@ impl Application for YourApp {
     /// it has a `Message` associated with it, which dictates what type of message it can send.
     ///
     /// To get a better sense of which widgets are available, check out the `widget` module.
-    fn view(&self) -> Element<Self::Message> {
+    fn view(&self) -> Element<'_, Self::Message> {
         self.core
             .applet
             .icon_button("display-symbolic")
@@ -90,7 +90,7 @@ impl Application for YourApp {
             .into()
     }
 
-    fn view_window(&self, _id: Id) -> Element<Self::Message> {
+    fn view_window(&self, _id: Id) -> Element<'_, Self::Message> {
         let content_list = widget::list_column()
             .padding(5)
             .spacing(0)

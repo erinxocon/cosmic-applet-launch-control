@@ -1,6 +1,6 @@
 [Desktop Entry]
-Name=COSMIC Applet Template
-Exec=cosmic-applet-template %F
+Name=COSMIC Applet Launch Control
+Exec=cosmic-applet-launch-control %F
 Terminal=false
 Type=Application
 StartupNotify=true

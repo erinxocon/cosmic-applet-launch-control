@@ -1,5 +1,5 @@
-name := 'cosmic-applet-template'
-export APPID := 'com.example.CosmicAppletTemplate'
+name := 'cosmic-applet-launchControl'
+export APPID := 'com.erinxocon.CosmicAppletLaunchControl'
 
 rootdir := ''
 prefix := '/usr'

@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.example.CosmicAppletTemplate</id>
+  <id>com.erinxocon.CosmicAppletLaunchControl</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-only</project_license>
   <project_group>COSMIC</project_group>
-  <developer_name>YourName</developer_name>
-  <update_contact>your@email.com</update_contact>
-  <url type="homepage"></url>
+  <developer_name>Erin O'Connell</developer_name>
+  <update_contact>erinocon5@gmail.com</update_contact>
+  <url type="homepage">https://github.com/erinxocon</url>
   <url type="bugtracker"></url>
-  <name>COSMIC App Template</name>
-  <summary>A template for COSMIC applications</summary>
+  <name>COSMIC App Launch Control</name>
+  <summary>Launch Keyboard Control</summary>
   <description>
-    <p>A template for COSMIC applications</p>
+    <p>Control your launch keyboard. Choose from predefined modes!</p>
   </description>
-  <launchable type="desktop-id">com.example.CosmicAppletTemplate.desktop</launchable>
+  <launchable type="desktop-id">com.erinxocon.CosmicAppletLaunchControl.desktop</launchable>
   <icon type="remote" height="256" width="256">https://raw.githubusercontent.com/edfloreshz/cosmic-applet-template/master/res/icons/hicolor/256x256/apps/com.example.CosmicAppletTemplate.svg</icon>
   <screenshots>
   </screenshots>
@@ -22,7 +22,7 @@
       <mimetype>text/plain</mimetype>
     </mimetypes>
     <binaries>
-      <binary>cosmic-applet-template</binary>
+      <binary>cosmic-applet-launch-control</binary>
     </binaries>
   </provides>
 </component>
