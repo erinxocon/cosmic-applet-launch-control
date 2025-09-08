@@ -2,6 +2,7 @@ use std::{error, fmt, string::FromUtf8Error};
 
 use ectool::{Access, AccessHid, Ec, Error as EcError};
 use hidapi::{HidApi, HidError};
+use strum::{EnumCount, EnumIter};
 use thiserror::Error;
 
 #[derive(Debug)]
@@ -34,7 +35,7 @@ impl From<EcError> for LaunchError {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(EnumIter, EnumCount, Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum LedMode {
     SolidColor = 0,
@@ -109,6 +110,7 @@ pub struct Launch {
     board: String,
     version: String,
     current_mode: LedMode,
+    current_speed: u8,
 }
 
 impl Launch {
@@ -120,7 +122,7 @@ impl Launch {
                     let device = info.open_device(&api)?;
                     let access = AccessHid::new(device, 10, 100)?;
 
-                    let (ec, board, version, current_mode) = unsafe {
+                    let (ec, board, version, current_mode, current_speed) = unsafe {
                         let mut ec = Ec::new(access)?.into_dyn();
 
                         let data_size = ec.access().data_size();
@@ -139,12 +141,12 @@ impl Launch {
                             String::from_utf8(data)?
                         };
 
-                        let current_mode = {
-                            let mode = ec.led_get_mode(0)?.0;
-                            LedMode::try_from(mode)?
+                        let (current_mode, current_speed) = {
+                            let result = ec.led_get_mode(0)?;
+                            (LedMode::try_from(result.0)?, result.1)
                         };
 
-                        (ec, board, version, current_mode)
+                        (ec, board, version, current_mode, current_speed)
                     };
 
                     return Ok(Self {
@@ -152,6 +154,7 @@ impl Launch {
                         board,
                         version,
                         current_mode,
+                        current_speed,
                     });
                 }
                 _ => {}
@@ -172,12 +175,17 @@ impl Launch {
         self.current_mode
     }
 
+    pub fn current_speed(&self) -> u8 {
+        self.current_speed
+    }
+
     pub fn set_led_mode(&mut self, mode: LedMode, speed: u8) -> Result<(), LaunchError> {
-        let mode_raw = unsafe {
+        let result = unsafe {
             self.ec.led_set_mode(0, mode as u8, speed)?;
-            self.ec.led_get_mode(0)?.0
+            self.ec.led_get_mode(0)?
         };
-        self.current_mode = LedMode::try_from(mode_raw)?;
+        self.current_mode = LedMode::try_from(result.0)?;
+        self.current_speed = result.1;
         Ok(())
     }
 }
