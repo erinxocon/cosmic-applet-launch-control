@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-only
 
+use cosmic::applet::cosmic_panel_config::{PanelSize, PanelAnchor};
+use cosmic::applet::{PanelType, Size};
 use cosmic::app::{Core, Task};
-use cosmic::iced::window::Id;
+use cosmic::iced::futures::channel;
+use cosmic::iced::{Limits, Subscription, window::Id,};
 use cosmic::iced::Limits;
 use cosmic::iced_winit::commands::popup::{destroy_popup, get_popup};
-use cosmic::widget::{self, settings};
+use cosmic::widget::{self, settings, vertical_space, slider, list_column};
+
 use cosmic::{Application, Element};
+
+use tokio_udev::Device;
 
 use crate::fl;
 
-/// This is the struct that represents your application.
-/// It is used to define the data that will be used by your application.
 #[derive(Default)]
 pub struct LaunchControl {
     /// Application state which is managed by the COSMIC runtime.
@@ -21,32 +25,42 @@ pub struct LaunchControl {
     example_row: bool,
 }
 
-/// This is the enum that contains all the possible variants that your application will need to transmit messages.
-/// This is used to communicate between the different parts of your application.
-/// If your application does not need to send messages, you can use an empty enum or `()`.
+pub struct DeviceInfo {
+    vid: u32,
+    pid: u32
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
     TogglePopup,
     PopupClosed(Id),
     ToggleExampleRow(bool),
+    DeviceConnected(DeviceInfo),
+    DeviceDisconnected
 }
 
-/// Implement the `Application` trait for your application.
-/// This is where you define the behavior of your application.
-///
-/// The `Application` trait requires you to define the following types and constants:
-/// - `Executor` is the async executor that will be used to run your application's commands.
-/// - `Flags` is the data that your application needs to use before it starts.
-/// - `Message` is the enum that contains all the possible variants that your application will need to transmit messages.
-/// - `APP_ID` is the unique identifier of your application.
+impl LaunchControl {
+    async fn device_task(mut out: Subscription<Self::Message>) {
+        if let Ok(mut rx) = DeviceListener::new(0x3384, 0x0001..=0x000A)
+            .with_subsystem("hidraw")
+            .with_debounce_ms(300)
+            .start()
+            .await
+        {
+            while let Some(ev) = rx.recv().await {
+                // forward events into iced
+                let _ = out.send(Message::Device(ev)).await;
+            }
+        }
+    }
+}
+
+
 impl Application for LaunchControl {
     type Executor = cosmic::executor::Default;
-
     type Flags = ();
-
     type Message = Message;
-
-    const APP_ID: &'static str = "com.example.CosmicAppletTemplate";
+    const APP_ID: &'static str = "com.erinxocon.CosmicAppletLaunchControl";
 
     fn core(&self) -> &Core {
         &self.core
@@ -56,13 +70,10 @@ impl Application for LaunchControl {
         &mut self.core
     }
 
-    /// This is the entry point of your application, it is where you initialize your application.
-    ///
-    /// Any work that needs to be done before the application starts should be done here.
-    ///
-    /// - `core` is used to passed on for you by libcosmic to use in the core of your own application.
-    /// - `flags` is used to pass in any data that your application needs to use before it starts.
-    /// - `Command` type is used to send messages to your application. `Command::none()` can be used to send no messages to your application.
+    fn subscription(&self) -> Subscription<Self::Message> {
+        channel("device-listener", 128, LaunchControl::device_task)
+    }
+
     fn init(core: Core, _flags: Self::Flags) -> (Self, Task<Self::Message>) {
         let app = LaunchControl {
             core,
@@ -76,12 +87,7 @@ impl Application for LaunchControl {
         Some(Message::PopupClosed(id))
     }
 
-    /// This is the main view of your application, it is the root of your widget tree.
-    ///
-    /// The `Element` type is used to represent the visual elements of your application,
-    /// it has a `Message` associated with it, which dictates what type of message it can send.
-    ///
-    /// To get a better sense of which widgets are available, check out the `widget` module.
+
     fn view(&self) -> Element<'_, Self::Message> {
         self.core
             .applet
@@ -91,7 +97,7 @@ impl Application for LaunchControl {
     }
 
     fn view_window(&self, _id: Id) -> Element<'_, Self::Message> {
-        let content_list = widget::list_column()
+        let content_list = list_column()
             .padding(5)
             .spacing(0)
             .add(settings::item(
@@ -102,9 +108,6 @@ impl Application for LaunchControl {
         self.core.applet.popup_container(content_list).into()
     }
 
-    /// Application messages are handled here. The application state can be modified based on
-    /// what message was received. Commands may be returned for asynchronous execution on a
-    /// background thread managed by the application's executor.
     fn update(&mut self, message: Self::Message) -> Task<Self::Message> {
         match message {
             Message::TogglePopup => {
